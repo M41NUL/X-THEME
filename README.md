@@ -106,6 +106,8 @@ git clone https://github.com/M41NUL/X-THEME.git && cd X-THEME && bash installer.
 
 ```bash
 # Step 1 — Clone
+apt update && apt upgrade -y
+pkg install git -y
 git clone https://github.com/M41NUL/X-THEME.git
 cd X-THEME
 
