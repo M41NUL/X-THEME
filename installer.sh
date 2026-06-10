@@ -30,20 +30,35 @@ echo ""
 
 progress_bar() {
     local label="$1"
-    local total=35
-    local bar_width=28
+    local total=40
+    local bar_width=24
     for i in $(seq 1 $total); do
-        filled=$(( bar_width * i / total ))
-        arrow=""
-        [ $filled -gt 1 ] && arrow=$(printf '%0.s▰' $(seq 1 $(( filled - 1 ))))
-        [ $filled -gt 0 ] && arrow="${arrow}▶"
-        empty=$(printf '%0.s ' $(seq 1 $(( bar_width - filled ))))
-        pct=$(( 100 * i / total ))
+        local filled=$(( bar_width * i / total ))
+        local empty=$(( bar_width - filled ))
+
+        # build filled part: last filled block is ▒, rest are ▓
+        local bar=""
+        if [ $filled -gt 0 ]; then
+            if [ $filled -gt 1 ]; then
+                bar=$(printf '%0.s▓' $(seq 1 $(( filled - 1 ))))
+            fi
+            bar="${bar}▒"
+        fi
+        # empty part
+        local emp=""
+        if [ $empty -gt 0 ]; then
+            emp=$(printf '%0.s░' $(seq 1 $empty))
+        fi
+
+        local pct=$(( 100 * i / total ))
+
+        # color by percent
         if   [ $pct -lt 40 ]; then bc="${R}"
         elif [ $pct -lt 80 ]; then bc="${O}"
         else bc="${G}"; fi
-        printf "\r  ${W}%-22s${RST}  ${bc}${B}[%-28s]${RST}  ${W}%3d%%${RST}" \
-               "$label" "${arrow}${empty}" "$pct"
+
+        printf "\r  ${W}%-22s${RST}  ${bc}${B}▕%s%s▏${RST}  ${W}%3d%%${RST}" \
+               "$label" "$bar" "$emp" "$pct"
         sleep 0.03
     done
     echo ""
@@ -111,9 +126,7 @@ else
     ok_msg "Storage permission granted"
 fi
 
-# Make all scripts executable
 chmod +x "$SCRIPT_DIR"/*.sh
-
 touch "$FLAG_FILE"
 
 echo ""
