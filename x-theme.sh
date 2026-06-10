@@ -15,6 +15,11 @@ source "$SCRIPT_DIR/prompts.sh"
 source "$SCRIPT_DIR/extrakeys.sh"
 source "$SCRIPT_DIR/backup.sh"
 
+# ── Strip ANSI escape codes & get visual character count ──────────────────────
+_strwidth() {
+    echo -n "$1" | sed 's/\x1b\[[0-9;]*[mKHfABCDsuJr]//g' | wc -m
+}
+
 # ── Pixel art banner (green, bold) ────────────────────────────────────────────
 _print_banner() {
 echo -e "${G}${B}"
@@ -30,8 +35,6 @@ echo -e "${RST}"
 # ── Info card ─────────────────────────────────────────────────────────────────
 _info_box() {
     local W_BOX=48
-    local H="═"
-    local V="║"
 
     # top border
     echo -e "  ${O}${B}╔$(printf '%0.s═' $(seq 1 $W_BOX))╗${RST}"
@@ -60,22 +63,26 @@ _info_box() {
     echo ""
 }
 
-# center a row inside double-line box
+# ── Center a row inside double-line box ───────────────────────────────────────
 _cx_row() {
     local text="$1" BW="$2" tc="${3:-$G}"
-    local vlen=${#text}
+    local vlen
+    vlen=$(_strwidth "$text")
     local lpad=$(( (BW - vlen) / 2 ))
     local rpad=$(( BW - vlen - lpad ))
     printf "  ${O}${B}║${RST}%*s${tc}${B}%s${RST}%*s${O}${B}║${RST}\n" \
            "$lpad" "" "$text" "$rpad" ""
 }
 
-# key-value row inside double-line box
+# ── Key-value row inside double-line box ──────────────────────────────────────
 _kv_row() {
     local label="$1" value="$2" lw="$3" BW="$4" lc="${5:-$O}" vc="${6:-$W}"
-    local lpad=$(( lw - ${#label} ))
-    local used=$(( 1 + lw + 2 + ${#value} + 1 ))
+    local vlen
+    vlen=$(_strwidth "$value")
+    local used=$(( 1 + lw + 2 + vlen + 1 ))
     local rpad=$(( BW - used ))
+    # clamp rpad to 0 if negative (long values)
+    [ "$rpad" -lt 0 ] && rpad=0
     printf "  ${O}${B}║${RST} ${lc}${B}%-*s${RST}  ${vc}%s${RST}%*s${O}${B}║${RST}\n" \
            "$lw" "$label" "$value" "$rpad" ""
 }
